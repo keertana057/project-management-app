@@ -1,41 +1,63 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
-import ProjectTasks from "./pages/ProjectTasks";
 import AdminDashboard from "./pages/AdminDashboard";
 import EmployeeDashboard from "./pages/EmployeeDashboard";
 import ProtectedRoute from "./auth/ProtectedRoute";
+import { useAuth } from "./auth/AuthContext";
+import ProjectDetails from "./pages/ProjectDetails";
+import EmployeeProjectDetails from "./pages/EmployeeProjectDetails";
 
-export default function App() {
+
+function App() {
+  const { user } = useAuth();
+
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Login />} />
+    <Routes>
+      <Route
+        path="/"
+        element={
+          user
+            ? <Navigate to={user.role === "ADMIN" ? "/admin" : "/employee"} />
+            : <Navigate to="/login" />
+        }
+      />
 
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute allowedRole="ADMIN">
-              <AdminDashboard />
-            </ProtectedRoute>
-          }
-        />
-         <Route
-           path="/projects/:id"
-           element={
-             <ProtectedRoute allowedRole="ADMIN">
-              <ProjectTasks />
-            </ProtectedRoute>
-          }          />
+      <Route path="/login" element={<Login />} />
 
-        <Route
-          path="/employee"
-          element={
-            <ProtectedRoute allowedRole="EMPLOYEE">
-              <EmployeeDashboard />
-            </ProtectedRoute>
-          }
-        />
-      </Routes>
-    </BrowserRouter>
+      <Route path="/admin" element={<ProtectedRoute role="ADMIN"><AdminDashboard /></ProtectedRoute>} />
+
+      <Route
+        path="/admin/projects/:id"
+        element={
+          <ProtectedRoute role="ADMIN">
+            <ProjectDetails />
+          </ProtectedRoute>
+        }
+      />
+
+
+      <Route
+        path="/employee"
+        element={
+          <ProtectedRoute role="EMPLOYEE">
+            <EmployeeDashboard />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/employee/projects/:id"
+        element={
+          <ProtectedRoute role="EMPLOYEE">
+            <EmployeeProjectDetails />
+          </ProtectedRoute>
+        }
+      />
+
+
+    </Routes>
   );
 }
+
+export default App;
+

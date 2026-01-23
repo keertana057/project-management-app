@@ -2,34 +2,27 @@ import express from "express";
 import {
   createProject,
   getProjects,
-  updateProjectStatus,
-  addProjectMembers
+  getMyProjects,
+  getProjectById,
+  getMyProjectById,
+  updateProject,
+  addProjectMembers,
+  archiveProject,
 } from "../controllers/project.controller.js";
+
 import { verifyJWT } from "../middlewares/verifyJWT.js";
 import { checkRole } from "../middlewares/checkRole.js";
 
 const router = express.Router();
 
-// Create project (ADMIN)
 router.post("/", verifyJWT, checkRole(["ADMIN"]), createProject);
+router.get("/", verifyJWT, checkRole(["ADMIN"]), getProjects);
+router.get("/my", verifyJWT, checkRole(["EMPLOYEE"]), getMyProjects);
+router.get("/:id/my", verifyJWT, checkRole(["EMPLOYEE"]), getMyProjectById);
+router.get("/:id", verifyJWT, getProjectById);
 
-// Get projects (ADMIN: all, EMPLOYEE: assigned)
-router.get("/", verifyJWT, getProjects);
-
-// Update project status (ADMIN)
-router.put(
-  "/:id/status",
-  verifyJWT,
-  checkRole(["ADMIN"]),
-  updateProjectStatus
-);
-
-// Update project members (ADMIN)
-router.put(
-  "/:id/members",
-  verifyJWT,
-  checkRole(["ADMIN"]),
-  addProjectMembers
-);
+router.put("/:id", verifyJWT, checkRole(["ADMIN"]), updateProject);
+router.put("/:id/members", verifyJWT, checkRole(["ADMIN"]), addProjectMembers);
+router.put("/:id/archive", verifyJWT, checkRole(["ADMIN"]), archiveProject);
 
 export default router;
