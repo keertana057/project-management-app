@@ -21,6 +21,16 @@ export default function EmployeeProjectDetails() {
     setTasks(res.data);
   };
 
+  /* ================= UPDATE TASK STATUS ================= */
+  const updateTaskStatus = async (taskId, status) => {
+    try {
+      await api.put(`/tasks/${taskId}/status`, { status });
+      fetchMyTasks(); // refresh list
+    } catch {
+      alert("Failed to update task status");
+    }
+  };
+
   useEffect(() => {
     Promise.all([fetchProject(), fetchMyTasks()])
       .catch(() => alert("Failed to load project"))
@@ -37,6 +47,10 @@ export default function EmployeeProjectDetails() {
         <div>
           <h1 style={title}>{project.name}</h1>
           <p style={description}>{project.description}</p>
+
+          <p style={dateText}>
+            📅 {formatDate(project.startDate)} → {formatDate(project.endDate)}
+          </p>
 
           <div style={metaRow}>
             <span style={statusBadge(project.status)}>
@@ -62,12 +76,21 @@ export default function EmployeeProjectDetails() {
                 <h4 style={taskTitle}>{task.title}</h4>
 
                 <div style={taskMeta}>
-                  <span style={statusBadge(task.status)}>
-                    {task.status}
-                  </span>
                   <span style={priorityBadge(task.priority)}>
                     {task.priority}
                   </span>
+
+                  <select
+                    value={task.status}
+                    style={statusSelect}
+                    onChange={(e) =>
+                      updateTaskStatus(task._id, e.target.value)
+                    }
+                  >
+                    <option value="TODO">TODO</option>
+                    <option value="IN_PROGRESS">IN_PROGRESS</option>
+                    <option value="DONE">DONE</option>
+                  </select>
                 </div>
               </div>
             ))}
@@ -104,6 +127,12 @@ const title = {
 const description = {
   color: "#94a3b8",
   maxWidth: 600,
+};
+
+const dateText = {
+  color: "#cbd5f5",
+  marginTop: 6,
+  fontSize: 14,
 };
 
 const metaRow = {
@@ -168,9 +197,27 @@ const taskTitle = {
 
 const taskMeta = {
   display: "flex",
-  gap: 8,
+  gap: 10,
+  alignItems: "center",
+};
+
+const statusSelect = {
+  background: "#020617",
+  color: "#e5e7eb",
+  border: "1px solid #334155",
+  borderRadius: 6,
+  padding: "4px 8px",
+  fontSize: 12,
+  cursor: "pointer",
 };
 
 const muted = {
   color: "#94a3b8",
 };
+
+const formatDate = (date) =>
+  new Date(date).toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
