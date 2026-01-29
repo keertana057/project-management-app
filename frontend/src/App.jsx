@@ -1,45 +1,46 @@
 import { Routes, Route, Navigate } from "react-router-dom";
+
 import Login from "./pages/Login";
 import AdminDashboard from "./pages/AdminDashboard";
 import PMDashboard from "./pages/PMDashboard";
 import EmployeeDashboard from "./pages/EmployeeDashboard";
-import ProtectedRoute from "./auth/ProtectedRoute";
-import { useAuth } from "./auth/AuthContext";
+
 import ProjectDetails from "./pages/ProjectDetails";
 import PMProjectDetails from "./pages/PMProjectDetails";
 import EmployeeProjectDetails from "./pages/EmployeeProjectDetails";
+
+import ProtectedRoute from "./auth/ProtectedRoute";
+import { useAuth } from "./auth/useAuth"; // ✅ FIXED IMPORT
 
 function App() {
   const { user } = useAuth();
 
   return (
     <Routes>
-      {/* Root redirect */}
+      {/* ROOT REDIRECT */}
       <Route
         path="/"
         element={
-          user ? (
-            user.role === "ADMIN" ? (
-              <Navigate to="/admin" />
-            ) : user.role === "PROJECT_MANAGER" ? (
-              <Navigate to="/pm" />
-            ) : (
-              <Navigate to="/employee" />
-            )
+          !user ? (
+            <Navigate to="/login" replace />
+          ) : user.role === "ADMIN" ? (
+            <Navigate to="/admin" replace />
+          ) : user.role === "PROJECT_MANAGER" ? (
+            <Navigate to="/pm" replace />
           ) : (
-            <Navigate to="/login" />
+            <Navigate to="/employee" replace />
           )
         }
       />
 
-      {/* Auth */}
+      {/* AUTH */}
       <Route path="/login" element={<Login />} />
 
-      {/* ADMIN */}
+      {/* ================= ADMIN ================= */}
       <Route
         path="/admin"
         element={
-          <ProtectedRoute role="ADMIN">
+          <ProtectedRoute roles={["ADMIN"]}>
             <AdminDashboard />
           </ProtectedRoute>
         }
@@ -48,17 +49,17 @@ function App() {
       <Route
         path="/admin/projects/:id"
         element={
-          <ProtectedRoute role="ADMIN">
+          <ProtectedRoute roles={["ADMIN"]}>
             <ProjectDetails />
           </ProtectedRoute>
         }
       />
 
-      {/* PROJECT MANAGER */}
+      {/* ============== PROJECT MANAGER ============== */}
       <Route
         path="/pm"
         element={
-          <ProtectedRoute role="PROJECT_MANAGER">
+          <ProtectedRoute roles={["PROJECT_MANAGER"]}>
             <PMDashboard />
           </ProtectedRoute>
         }
@@ -67,17 +68,17 @@ function App() {
       <Route
         path="/pm/projects/:id"
         element={
-          <ProtectedRoute role="PROJECT_MANAGER">
+          <ProtectedRoute roles={["PROJECT_MANAGER"]}>
             <PMProjectDetails />
           </ProtectedRoute>
         }
       />
 
-      {/* EMPLOYEE */}
+      {/* ================= EMPLOYEE ================= */}
       <Route
         path="/employee"
         element={
-          <ProtectedRoute role="EMPLOYEE">
+          <ProtectedRoute roles={["EMPLOYEE"]}>
             <EmployeeDashboard />
           </ProtectedRoute>
         }
@@ -86,15 +87,19 @@ function App() {
       <Route
         path="/employee/projects/:id"
         element={
-          <ProtectedRoute role="EMPLOYEE">
+          <ProtectedRoute roles={["EMPLOYEE"]}>
             <EmployeeProjectDetails />
           </ProtectedRoute>
         }
       />
+
+      {/* FALLBACK */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
 
 export default App;
+
 
 
