@@ -42,9 +42,19 @@ const projectSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
+
+    projectManager: {
+     type: mongoose.Schema.Types.ObjectId,
+     ref: "User",
+    },
+
   },
   { timestamps: true }
+  
 );
 
 const Project = mongoose.model("Project", projectSchema);
 export default Project;
+
+
+

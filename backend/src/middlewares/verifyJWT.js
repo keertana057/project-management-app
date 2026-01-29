@@ -1,4 +1,4 @@
-import jwt from "jsonwebtoken";   // 🔥 THIS LINE WAS MISSING
+import jwt from "jsonwebtoken";   
 
 export const verifyJWT = (req, res, next) => {
   try {

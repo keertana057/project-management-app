@@ -1,106 +1,116 @@
 import { useEffect, useState } from "react";
-import api from "../api/axios";
-import ProjectCard from "../components/ProjectCard";
-import CreateProjectModal from "../components/CreateProjectModal";
+import {
+  getAllProjects,
+  assignProjectManager,
+  archiveProject,
+} from "../api/projectApi";
+import { getProjectManagers } from "../api/userApi";
+import { useToast } from "../ui/ToastContext";
 
 export default function AdminDashboard() {
   const [projects, setProjects] = useState([]);
+  const [pms, setPMs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
+  const { showToast } = useToast();
 
-  const fetchProjects = async () => {
-    try {
-      const res = await api.get("/projects");
-      setProjects(res.data);
-    } catch (err) {
-      console.error(err);
-      alert("Failed to fetch projects");
-    } finally {
-      setLoading(false);
-    }
+  const fetchData = async () => {
+    const [projectsRes, pmRes] = await Promise.all([
+      getAllProjects(),
+      getProjectManagers(),
+    ]);
+
+    setProjects(projectsRes.data);
+    setPMs(pmRes.data);
+    setLoading(false);
   };
 
   useEffect(() => {
-    fetchProjects();
+     showToast("Toast system working", "success");
   }, []);
+
+  useEffect(() => {
+    fetchData().catch(() =>
+      showToast("Failed to load admin data", "error")
+    );
+  }, []);
+
+  const handleAssignPM = async (projectId, pmId) => {
+    try {
+      await assignProjectManager(projectId, pmId);
+      showToast("Project Manager assigned", "success");
+      fetchData();
+    } catch {
+      showToast("Failed to assign PM", "error");
+    }
+  };
+
+  const handleArchive = async (projectId) => {
+    if (!window.confirm("Archive this project?")) return;
+
+    try {
+      await archiveProject(projectId);
+      showToast("Project archived", "success");
+      fetchData();
+    } catch {
+      showToast("Failed to archive project", "error");
+    }
+  };
+
+  if (loading) return <p style={loadingText}>Loading...</p>;
 
   return (
     <div style={page}>
-      <div style={container}>
-        <header style={header}>
-          <h1 style={title}>Admin Dashboard</h1>
+      <h1 style={title}>Admin Dashboard</h1>
 
-          <button style={primaryBtn} onClick={() => setShowModal(true)}>
-            ➕ Create Project
-          </button>
-        </header>
-
-        {loading && <p style={muted}>Loading projects…</p>}
-
-        {!loading && projects.length === 0 && (
-          <p style={muted}>No projects yet</p>
-        )}
-
+      {projects.length === 0 ? (
+        <p style={muted}>No active projects</p>
+      ) : (
         <div style={grid}>
           {projects.map((project) => (
-            <ProjectCard key={project._id} project={project} />
+            <div key={project._id} style={card}>
+              <h3>{project.name}</h3>
+              <p style={muted}>{project.description}</p>
+
+              <p>
+                PM:{" "}
+                <strong>
+                  {project.projectManager?.name || "Unassigned"}
+                </strong>
+              </p>
+
+              <select
+                style={select}
+                value={project.projectManager?._id || ""}
+                onChange={(e) =>
+                  handleAssignPM(project._id, e.target.value)
+                }
+              >
+                <option value="">Assign Project Manager</option>
+                {pms.map((pm) => (
+                  <option key={pm._id} value={pm._id}>
+                    {pm.name}
+                  </option>
+                ))}
+              </select>
+
+              <button
+                style={archiveBtn}
+                onClick={() => handleArchive(project._id)}
+              >
+                Archive Project
+              </button>
+            </div>
           ))}
         </div>
-
-        {showModal && (
-          <CreateProjectModal
-            onClose={() => setShowModal(false)}
-            onCreated={fetchProjects}
-          />
-        )}
-      </div>
+      )}
     </div>
   );
 }
 
-/* ================= styles ================= */
+/* styles unchanged */
 
-const page = {
-  minHeight: "100vh",
-  background: "linear-gradient(135deg, #020617, #0f172a)",
-  padding: "40px 0",
-};
-
-const container = {
-  maxWidth: 1200,
-  margin: "0 auto",
-  padding: "0 24px",
-};
-
-const header = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: 32,
-};
-
-const title = {
-  color: "#f8fafc",
-  fontSize: 28,
-  fontWeight: 600,
-};
-
-const grid = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-  gap: 24,
-};
-
-const primaryBtn = {
-  padding: "10px 18px",
-  background: "#2563eb",
-  color: "#fff",
-  border: "none",
-  borderRadius: 10,
-  cursor: "pointer",
-  fontSize: 14,
-};
-
-const muted = {
+const loadingText = {
+  padding: 40,
   color: "#94a3b8",
 };
+

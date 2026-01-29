@@ -4,48 +4,23 @@ import { checkRole } from "../middlewares/checkRole.js";
 
 import {
   createTask,
+  updateTask,
   getTasksByProject,
   getMyTasks,
   getMyTasksForProject,
   updateTaskStatus,
-  addSubtask,
-  addDependency,
 } from "../controllers/task.controller.js";
 
 const router = express.Router();
 
-/* ================= ADMIN ================= */
-
-// Create task
-router.post("/", verifyJWT, checkRole(["ADMIN"]), createTask);
-
-// Add subtask
-router.post("/:id/subtasks", verifyJWT, checkRole(["ADMIN"]), addSubtask);
-
-// Add dependency
-router.post("/:id/dependencies", verifyJWT, checkRole(["ADMIN"]), addDependency);
-
-/* ================= COMMON ================= */
-
-// Get tasks for a project
-// ADMIN → all tasks
-// EMPLOYEE → only their tasks
-router.get("/project/:projectId", verifyJWT, getTasksByProject);
-
-// Update task status
-router.put("/:id/status", verifyJWT, updateTaskStatus);
+/* ================= PROJECT MANAGER ================= */
+router.post("/", verifyJWT, checkRole(["PROJECT_MANAGER"]), createTask);
+router.put("/:id", verifyJWT, checkRole(["PROJECT_MANAGER"]), updateTask);
+router.get("/project/:projectId", verifyJWT, checkRole(["PROJECT_MANAGER"]), getTasksByProject);
 
 /* ================= EMPLOYEE ================= */
-
-// Get all my tasks (across projects)
 router.get("/my", verifyJWT, checkRole(["EMPLOYEE"]), getMyTasks);
-
-// ✅ Get my tasks for ONE project (THIS IS THE IMPORTANT ONE)
-router.get(
-  "/project/:projectId/my",
-  verifyJWT,
-  checkRole(["EMPLOYEE"]),
-  getMyTasksForProject
-);
+router.get("/project/:projectId/my", verifyJWT, checkRole(["EMPLOYEE"]), getMyTasksForProject);
+router.put("/:id/status", verifyJWT, checkRole(["EMPLOYEE"]), updateTaskStatus);
 
 export default router;

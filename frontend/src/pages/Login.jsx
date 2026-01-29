@@ -2,6 +2,7 @@ import { useState } from "react";
 import api from "../api/axios";
 import { useAuth } from "../auth/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "../ui/ToastContext";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -10,6 +11,7 @@ export default function Login() {
 
   const { login } = useAuth();
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -19,11 +21,16 @@ export default function Login() {
       const res = await api.post("/auth/login", { email, password });
 
       login(res.data);
+      showToast("Login successful", "success");
 
-      // ✅ SAME ROLE-BASED REDIRECT AS ORIGINAL
-      navigate(res.data.role === "ADMIN" ? "/admin" : "/employee");
+      if (res.data.role === "ADMIN") navigate("/admin");
+      else if (res.data.role === "PROJECT_MANAGER") navigate("/pm");
+      else navigate("/employee");
     } catch (err) {
-      alert(err.response?.data?.message || "Login failed");
+      showToast(
+        err.response?.data?.message || "Login failed",
+        "error"
+      );
     } finally {
       setLoading(false);
     }

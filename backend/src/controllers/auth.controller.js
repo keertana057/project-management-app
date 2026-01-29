@@ -12,7 +12,7 @@ export const login = async (req, res) => {
 
   const token = jwt.sign(
     {
-      id: user._id.toString(), // 🔑 single source of truth
+      id: user._id.toString(),
       role: user.role,
     },
     process.env.JWT_SECRET,

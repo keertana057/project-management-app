@@ -1,121 +1,47 @@
-import { useEffect, useState } from "react";
-import api from "../api/axios";
+import { useState } from "react";
 
 export default function CreateTaskModal({
-  projectId,
-  projectStatus, // 👈 NEW
+  members,
   onClose,
-  onCreated,
+  onCreate,
 }) {
   const [title, setTitle] = useState("");
-  const [priority, setPriority] = useState("MEDIUM");
   const [assignedTo, setAssignedTo] = useState("");
-  const [employees, setEmployees] = useState([]);
-  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    api.get("/users").then((res) => {
-      setEmployees(res.data.filter((u) => u.role === "EMPLOYEE"));
-    });
-  }, []);
-
-  const createTask = async () => {
-    if (projectStatus === "ARCHIVED") return;
-
-    if (!title.trim()) return alert("Task title required");
-
-    try {
-      setLoading(true);
-      await api.post("/tasks", {
-        title,
-        priority,
-        project: projectId,
-        assignedTo: assignedTo || null,
-      });
-      onCreated();
-      onClose();
-    } catch {
-      alert("Failed to create task");
-    } finally {
-      setLoading(false);
-    }
+  const submit = () => {
+    if (!title || !assignedTo) return;
+    onCreate({ title, assignedTo });
   };
-
-  const isArchived = projectStatus === "ARCHIVED";
 
   return (
     <div style={overlay}>
       <div style={modal}>
-        <h3 style={titleStyle}>Create Task</h3>
+        <h3>Create Task</h3>
 
-        {isArchived && (
-          <p style={archivedNote}>
-            This project is archived. You can’t add new tasks.
-          </p>
-        )}
+        <input
+          style={input}
+          placeholder="Task title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
 
-        {/* Task title */}
-        <div style={field}>
-          <label style={label}>Task title</label>
-          <input
-            placeholder="e.g. Implement authentication API"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            style={input}
-            disabled={isArchived}
-          />
-        </div>
+        <select
+          style={input}
+          value={assignedTo}
+          onChange={(e) => setAssignedTo(e.target.value)}
+        >
+          <option value="">Assign to employee</option>
+          {members.map((m) => (
+            <option key={m._id} value={m._id}>
+              {m.name}
+            </option>
+          ))}
+        </select>
 
-        {/* Priority */}
-        <div style={field}>
-          <label style={label}>Priority</label>
-          <select
-            value={priority}
-            onChange={(e) => setPriority(e.target.value)}
-            style={select}
-            disabled={isArchived}
-          >
-            <option value="LOW">Low</option>
-            <option value="MEDIUM">Medium</option>
-            <option value="HIGH">High</option>
-          </select>
-        </div>
-
-        {/* Assign member */}
-        <div style={field}>
-          <label style={label}>Assign to</label>
-          <select
-            value={assignedTo}
-            onChange={(e) => setAssignedTo(e.target.value)}
-            style={select}
-            disabled={isArchived}
-          >
-            <option value="">Unassigned</option>
-            {employees.map((e) => (
-              <option key={e._id} value={e._id}>
-                {e.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Actions */}
         <div style={actions}>
-          <button style={cancelBtn} onClick={onClose}>
-            Close
-          </button>
-
-          <button
-            style={{
-              ...createBtn,
-              opacity: loading || isArchived ? 0.5 : 1,
-              cursor:
-                loading || isArchived ? "not-allowed" : "pointer",
-            }}
-            onClick={createTask}
-            disabled={loading || isArchived}
-          >
-            {isArchived ? "Archived" : loading ? "Creating..." : "Create"}
+          <button onClick={onClose}>Cancel</button>
+          <button onClick={submit} style={primary}>
+            Create
           </button>
         </div>
       </div>
@@ -123,87 +49,47 @@ export default function CreateTaskModal({
   );
 }
 
-/* ================= STYLES ================= */
-
+/* styles */
 const overlay = {
   position: "fixed",
   inset: 0,
-  background: "rgba(0,0,0,0.6)",
+  background: "rgba(0,0,0,.6)",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  zIndex: 1000,
 };
 
 const modal = {
-  background: "#ffffff",
-  color: "#020617",
-  padding: 24,
-  borderRadius: 14,
-  width: 420,
-  boxShadow: "0 25px 60px rgba(0,0,0,0.45)",
-};
-
-const titleStyle = {
-  fontSize: 18,
-  fontWeight: 600,
-  marginBottom: 12,
-};
-
-const archivedNote = {
-  fontSize: 13,
-  color: "#7f1d1d",
-  background: "#fee2e2",
-  padding: "8px 10px",
-  borderRadius: 8,
-  marginBottom: 12,
-};
-
-const field = {
-  display: "flex",
-  flexDirection: "column",
-  gap: 6,
-  marginBottom: 14,
-};
-
-const label = {
-  fontSize: 13,
-  fontWeight: 500,
-  color: "#334155",
+  background: "#020617",
+  border: "1px solid #1e293b",
+  borderRadius: 10,
+  padding: 20,
+  width: 400,
+  color: "#e5e7eb",
 };
 
 const input = {
-  padding: "8px 10px",
-  borderRadius: 8,
-  border: "1px solid #cbd5f5",
-  fontSize: 14,
-  outline: "none",
-};
-
-const select = {
-  ...input,
-  background: "#ffffff",
+  width: "100%",
+  marginBottom: 10,
+  padding: 8,
+  background: "#020617",
+  color: "#e5e7eb",
+  border: "1px solid #334155",
+  borderRadius: 6,
 };
 
 const actions = {
   display: "flex",
   justifyContent: "flex-end",
   gap: 10,
-  marginTop: 22,
 };
 
-const cancelBtn = {
-  padding: "6px 14px",
-  borderRadius: 8,
-  border: "1px solid #cbd5f5",
-  background: "#f8fafc",
-  cursor: "pointer",
-};
-
-const createBtn = {
-  padding: "6px 16px",
-  borderRadius: 8,
+const primary = {
+  background: "#16a34a",
+  color: "#fff",
   border: "none",
-  background: "#2563eb",
-  color: "#ffffff",
+  padding: "6px 12px",
+  borderRadius: 6,
 };
+
+
