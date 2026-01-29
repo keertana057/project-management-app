@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 
 import Login from "./pages/Login";
+import Register from "./pages/Register";
 import AdminDashboard from "./pages/AdminDashboard";
 import PMDashboard from "./pages/PMDashboard";
 import EmployeeDashboard from "./pages/EmployeeDashboard";
@@ -10,7 +11,7 @@ import PMProjectDetails from "./pages/PMProjectDetails";
 import EmployeeProjectDetails from "./pages/EmployeeProjectDetails";
 
 import ProtectedRoute from "./auth/ProtectedRoute";
-import { useAuth } from "./auth/useAuth"; // ✅ FIXED IMPORT
+import { useAuth } from "./auth/useAuth";
 
 function App() {
   const { user } = useAuth();
@@ -35,6 +36,7 @@ function App() {
 
       {/* AUTH */}
       <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
 
       {/* ================= ADMIN ================= */}
       <Route
@@ -100,6 +102,3 @@ function App() {
 }
 
 export default App;
-
-
-

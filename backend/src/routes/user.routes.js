@@ -5,9 +5,13 @@ import User from "../models/User.models.js";
 
 const router = express.Router();
 
-// Get all users (ADMIN)
-router.get("/", verifyJWT, checkRole(["ADMIN"]), async (req, res) => {
-  const users = await User.find({ role: "EMPLOYEE" }).select("-password");
+// Get users with optional role filter
+router.get("/", verifyJWT, checkRole(["ADMIN", "PROJECT_MANAGER"]), async (req, res) => {
+  const query = {};
+  if (req.query.role) {
+    query.role = req.query.role;
+  }
+  const users = await User.find(query).select("-password");
   res.json(users);
 });
 

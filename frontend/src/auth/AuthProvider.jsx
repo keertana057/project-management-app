@@ -4,11 +4,21 @@ import { AuthContext } from "./auth.context";
 
 const initAuthState = () => {
   const token = localStorage.getItem("token");
-  const user = localStorage.getItem("user");
+  const userStr = localStorage.getItem("user");
+
+  let user = null;
+  if (userStr) {
+    try {
+      user = JSON.parse(userStr);
+    } catch (e) {
+      console.error("Failed to parse user from localStorage", e);
+      localStorage.removeItem("user");
+    }
+  }
 
   return {
     token,
-    user: user ? JSON.parse(user) : null,
+    user,
   };
 };
 

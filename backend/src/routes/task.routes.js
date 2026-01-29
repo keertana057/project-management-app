@@ -9,6 +9,7 @@ import {
   getMyTasks,
   getMyTasksForProject,
   updateTaskStatus,
+  deleteTask,
 } from "../controllers/task.controller.js";
 
 const router = express.Router();
@@ -16,6 +17,7 @@ const router = express.Router();
 /* ================= PROJECT MANAGER ================= */
 router.post("/", verifyJWT, checkRole(["PROJECT_MANAGER"]), createTask);
 router.put("/:id", verifyJWT, checkRole(["PROJECT_MANAGER"]), updateTask);
+router.delete("/:id", verifyJWT, checkRole(["PROJECT_MANAGER"]), deleteTask);
 router.get("/project/:projectId", verifyJWT, checkRole(["PROJECT_MANAGER"]), getTasksByProject);
 
 /* ================= EMPLOYEE ================= */

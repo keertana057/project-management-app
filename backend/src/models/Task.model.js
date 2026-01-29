@@ -3,6 +3,8 @@ import mongoose from "mongoose";
 const taskSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
+    description: { type: String },
+    deadline: { type: Date },
 
     status: {
       type: String,
@@ -29,11 +31,21 @@ const taskSchema = new mongoose.Schema(
 
     subtasks: [
       {
-        title: String,
+        title: { type: String, required: true },
         status: {
           type: String,
-          enum: ["TODO", "DONE"],
+          enum: ["TODO", "IN_PROGRESS", "DONE"],
           default: "TODO",
+        },
+        assignedTo: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+        deadline: Date,
+        priority: {
+          type: String,
+          enum: ["LOW", "MEDIUM", "HIGH"],
+          default: "MEDIUM",
         },
       },
     ],

@@ -12,9 +12,16 @@ export const updateTask = async (req, res) => {
   res.json(task);
 };
 
+export const deleteTask = async (req, res) => {
+  await Task.findByIdAndDelete(req.params.id);
+  res.json({ message: "Task deleted successfully" });
+};
+
 export const getTasksByProject = async (req, res) => {
   const tasks = await Task.find({ project: req.params.projectId })
-    .populate("assignedTo", "name email");
+    .populate("assignedTo", "name email")
+    .populate("dependencies", "title status priority")
+    .populate("subtasks.assignedTo", "name email");
   res.json(tasks);
 };
 

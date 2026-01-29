@@ -6,15 +6,19 @@ import AuthProvider from "./auth/AuthProvider"; // ✅ DEFAULT import
 import { ToastProvider } from "./ui/ToastContext";
 import "./index.css";
 
+import ErrorBoundary from "./ErrorBoundary";
+
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <BrowserRouter>
-      <AuthProvider>
-        <ToastProvider>
-          <App />
-        </ToastProvider>
-      </AuthProvider>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <AuthProvider>
+          <ToastProvider>
+            <App />
+          </ToastProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   </React.StrictMode>
 );
 

@@ -10,6 +10,7 @@ import {
   getPMProjects,
   assignEmployees,
   getEmployeeProjects,
+  updateProjectStatus,
 } from "../controllers/project.controller.js";
 
 const router = express.Router();
@@ -23,6 +24,7 @@ router.put("/:id/archive", verifyJWT, checkRole(["ADMIN"]), archiveProject);
 /* ================= PROJECT MANAGER ================= */
 router.get("/pm/my", verifyJWT, checkRole(["PROJECT_MANAGER"]), getPMProjects);
 router.put("/:id/members", verifyJWT, checkRole(["PROJECT_MANAGER"]), assignEmployees);
+router.put("/:id/status", verifyJWT, checkRole(["PROJECT_MANAGER"]), updateProjectStatus);
 
 /* ================= EMPLOYEE ================= */
 router.get("/my", verifyJWT, checkRole(["EMPLOYEE"]), getEmployeeProjects);

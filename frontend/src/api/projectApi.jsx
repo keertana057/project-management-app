@@ -12,6 +12,8 @@ export const archiveProject = (id) =>
 export const getPMProjects = () => api.get("/projects/pm/my");
 export const assignEmployees = (id, members) =>
   api.put(`/projects/${id}/members`, { members });
+export const updateProjectStatus = (id, status) =>
+  api.put(`/projects/${id}/status`, { status });
 
 /* ================= EMPLOYEE ================= */
 export const getEmployeeProjects = () => api.get("/projects/my");

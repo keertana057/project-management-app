@@ -66,6 +66,16 @@ export const assignEmployees = async (req, res) => {
   res.json(project);
 };
 
+// Update Project Status
+export const updateProjectStatus = async (req, res) => {
+  const project = await Project.findByIdAndUpdate(
+    req.params.id,
+    { status: req.body.status },
+    { new: true }
+  );
+  res.json(project);
+};
+
 /* ================= EMPLOYEE ================= */
 
 // Get employee projects

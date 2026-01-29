@@ -3,6 +3,7 @@ import api from "./axios";
 /* ================= PROJECT MANAGER ================= */
 export const createTask = (data) => api.post("/tasks", data);
 export const updateTask = (id, data) => api.put(`/tasks/${id}`, data);
+export const deleteTask = (id) => api.delete(`/tasks/${id}`);
 export const getTasksByProject = (projectId) =>
   api.get(`/tasks/project/${projectId}`);
 

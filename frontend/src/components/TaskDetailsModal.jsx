@@ -1,11 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { updateTask, deleteTask } from "../api/taskApi";
+import { useToast } from "../ui/ToastContext";
 
-export default function CreateTaskModal({
+export default function TaskDetailsModal({
+    task,
+    tasks, // all tasks in project (for dependencies)
     members,
-    tasks = [], // Array of existing tasks for dependencies
     onClose,
-    onCreate,
+    onUpdate,
 }) {
+    const { showToast } = useToast();
     const [activeTab, setActiveTab] = useState("details"); // details, subtasks, dependencies
 
     const [form, setForm] = useState({
@@ -15,13 +19,37 @@ export default function CreateTaskModal({
         status: "TODO",
         deadline: "",
         assignedTo: "",
-        subtasks: [],
-        dependencies: []
+        dependencies: [],
+        subtasks: []
     });
 
-    /* FORM UPDATES */
+    useEffect(() => {
+        if (task) {
+            setForm({
+                title: task.title || "",
+                description: task.description || "",
+                priority: task.priority || "MEDIUM",
+                status: task.status || "TODO",
+                deadline: task.deadline ? task.deadline.split('T')[0] : "",
+                assignedTo: task.assignedTo?._id || task.assignedTo || "",
+                dependencies: task.dependencies?.map(d => d._id || d) || [],
+                subtasks: task.subtasks || []
+            });
+        }
+    }, [task]);
+
     const handleChange = (e) => {
         setForm({ ...form, [e.target.name]: e.target.value });
+    };
+
+    const handleSave = async () => {
+        try {
+            await updateTask(task._id, form);
+            showToast("Task updated", "success");
+            onUpdate();
+        } catch (err) {
+            showToast("Failed to update task", "error");
+        }
     };
 
     /* SUBTASKS LOGIC */
@@ -47,6 +75,7 @@ export default function CreateTaskModal({
 
     /* DEPENDENCIES LOGIC */
     const toggleDependency = (id) => {
+        if (id === task._id) return; // cannot depend on self
         setForm(prev => {
             const exists = prev.dependencies.includes(id);
             return {
@@ -58,17 +87,11 @@ export default function CreateTaskModal({
         });
     };
 
-    /* SUBMIT */
-    const submit = () => {
-        if (!form.title || !form.assignedTo) return;
-        onCreate(form);
-    };
-
     return (
         <div style={overlay}>
             <div style={modal} className="glass-panel animate-fade-in">
                 <div style={header}>
-                    <h3>Create New Task</h3>
+                    <h3>Task Details</h3>
                     <button onClick={onClose} style={closeBtn}>✕</button>
                 </div>
 
@@ -100,7 +123,6 @@ export default function CreateTaskModal({
                             <input
                                 style={input}
                                 name="title"
-                                placeholder="Task title"
                                 value={form.title}
                                 onChange={handleChange}
                                 className="input-focus"
@@ -110,13 +132,26 @@ export default function CreateTaskModal({
                             <textarea
                                 style={{ ...input, height: 80, resize: 'none' }}
                                 name="description"
-                                placeholder="Task description..."
                                 value={form.description}
                                 onChange={handleChange}
                                 className="input-focus"
                             />
 
                             <div style={row}>
+                                <div style={{ flex: 1 }}>
+                                    <label style={label}>Status</label>
+                                    <select
+                                        style={input}
+                                        name="status"
+                                        value={form.status}
+                                        onChange={handleChange}
+                                        className="input-focus"
+                                    >
+                                        <option value="TODO">To Do</option>
+                                        <option value="IN_PROGRESS">In Progress</option>
+                                        <option value="DONE">Done</option>
+                                    </select>
+                                </div>
                                 <div style={{ flex: 1 }}>
                                     <label style={label}>Priority</label>
                                     <select
@@ -131,7 +166,9 @@ export default function CreateTaskModal({
                                         <option value="HIGH">High</option>
                                     </select>
                                 </div>
+                            </div>
 
+                            <div style={row}>
                                 <div style={{ flex: 1 }}>
                                     <label style={label}>Deadline</label>
                                     <input
@@ -143,32 +180,29 @@ export default function CreateTaskModal({
                                         className="input-focus"
                                     />
                                 </div>
+                                <div style={{ flex: 1 }}>
+                                    <label style={label}>Assigned To</label>
+                                    <select
+                                        style={input}
+                                        name="assignedTo"
+                                        value={form.assignedTo}
+                                        onChange={handleChange}
+                                        className="input-focus"
+                                    >
+                                        <option value="">Unassigned</option>
+                                        {members.map((m) => (
+                                            <option key={m._id} value={m._id}>
+                                                {m.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
                             </div>
-
-                            <label style={label}>Assign To</label>
-                            <select
-                                style={input}
-                                name="assignedTo"
-                                value={form.assignedTo}
-                                onChange={handleChange}
-                                className="input-focus"
-                            >
-                                <option value="">Select Employee</option>
-                                {members.map((m) => (
-                                    <option key={m._id} value={m._id}>
-                                        {m.name}
-                                    </option>
-                                ))}
-                            </select>
                         </>
                     )}
 
                     {activeTab === 'subtasks' && (
                         <div>
-                            <p style={{ fontSize: 13, color: '#94a3b8', marginBottom: 16 }}>
-                                Add subtasks to break down this task.
-                            </p>
-
                             <div style={subtaskInputRow}>
                                 <input
                                     style={{ ...input, marginBottom: 0 }}
@@ -193,8 +227,11 @@ export default function CreateTaskModal({
                                         <div style={{ flex: 1 }}>
                                             <div style={{ fontWeight: 500 }}>{st.title}</div>
                                             <div style={subText}>
-                                                {members.find(m => m._id === st.assignedTo)?.name || 'Unassigned'}
+                                                {members.find(m => m._id === (st.assignedTo?._id || st.assignedTo))?.name || 'Unassigned'}
                                             </div>
+                                        </div>
+                                        <div style={{ color: st.status === 'DONE' ? '#4ade80' : '#cbd5e1', fontSize: 12, marginRight: 10 }}>
+                                            {st.status}
                                         </div>
                                         <button onClick={() => removeSubtask(i)} style={removeBtn}>×</button>
                                     </div>
@@ -208,37 +245,41 @@ export default function CreateTaskModal({
                             <p style={{ fontSize: 13, color: '#94a3b8', marginBottom: 12 }}>
                                 Select tasks that must be completed BEFORE this task.
                             </p>
-                            {tasks.length === 0 ? (
-                                <p style={{ color: '#64748b', fontStyle: 'italic' }}>No other tasks available.</p>
-                            ) : (
-                                <div style={list}>
-                                    {tasks.map(t => {
-                                        const isDep = form.dependencies.includes(t._id);
-                                        return (
-                                            <div
-                                                key={t._id}
-                                                style={{
-                                                    ...listItem,
-                                                    background: isDep ? 'rgba(59, 130, 246, 0.2)' : 'rgba(255,255,255,0.02)'
-                                                }}
-                                                onClick={() => toggleDependency(t._id)}
-                                            >
-                                                <input type="checkbox" checked={isDep} readOnly style={{ marginRight: 10, accentColor: '#3b82f6' }} />
-                                                <span>{t.title}</span>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            )}
+                            <div style={list}>
+                                {tasks.filter(t => t._id !== task._id).map(t => {
+                                    const isDep = form.dependencies.includes(t._id);
+                                    return (
+                                        <div
+                                            key={t._id}
+                                            style={{
+                                                ...listItem,
+                                                background: isDep ? 'rgba(59, 130, 246, 0.2)' : 'rgba(255,255,255,0.02)'
+                                            }}
+                                            onClick={() => toggleDependency(t._id)}
+                                        >
+                                            <input type="checkbox" checked={isDep} readOnly style={{ marginRight: 10, accentColor: '#3b82f6' }} />
+                                            <span>{t.title}</span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
                         </div>
                     )}
                 </div>
 
                 <div style={footer}>
-                    <button onClick={onClose} style={cancelBtn}>Cancel</button>
-                    <button onClick={submit} style={primary}>
-                        Create Task
-                    </button>
+                    <button onClick={async () => {
+                        if (confirm('Are you sure you want to delete this task?')) {
+                            try {
+                                await deleteTask(task._id);
+                                showToast('Task deleted', 'success');
+                                onUpdate(); // Trigger refresh
+                            } catch (e) {
+                                showToast('Failed to delete task', 'error');
+                            }
+                        }
+                    }} style={deleteBtn}>Delete Task</button>
+                    <button onClick={handleSave} style={saveBtn}>Save Changes</button>
                 </div>
             </div>
         </div>
@@ -262,10 +303,10 @@ const modal = {
     borderRadius: 16,
     width: 600,
     color: "#e5e7eb",
-    overflow: 'hidden',
+    maxHeight: "90vh",
     display: 'flex',
     flexDirection: 'column',
-    maxHeight: "90vh"
+    overflow: 'hidden'
 };
 
 const header = { padding: "20px 24px", borderBottom: "1px solid rgba(255,255,255,0.1)", display: "flex", justifyContent: "space-between", alignItems: "center" };
@@ -277,8 +318,17 @@ const activeTabBtn = { ...tabBtn, color: "#fff", borderBottom: "2px solid #3b82f
 
 const content = { padding: 24, overflowY: "auto", flex: 1 };
 
-const footer = { padding: "16px 24px", borderTop: "1px solid rgba(255,255,255,0.1)", textAlign: "right", background: "rgba(0,0,0,0.2)", display: 'flex', justifyContent: 'flex-end', gap: 12 };
+const footer = { padding: "16px 24px", borderTop: "1px solid rgba(255,255,255,0.1)", textAlign: "right", background: "rgba(0,0,0,0.2)", display: 'flex', justifyContent: 'space-between' };
 
+const deleteBtn = {
+    background: 'transparent',
+    border: '1px solid #ef4444',
+    color: '#ef4444',
+    padding: "8px 16px",
+    borderRadius: 8,
+    cursor: 'pointer',
+    fontWeight: 500
+};
 
 const label = { display: 'block', fontSize: 12, marginBottom: 6, color: '#94a3b8' };
 
@@ -296,20 +346,11 @@ const input = {
 
 const row = { display: 'flex', gap: 16 };
 
-const cancelBtn = {
-    background: 'transparent',
-    border: '1px solid #334155',
-    color: '#cbd5e1',
-    padding: "8px 16px",
-    borderRadius: 8,
-    cursor: 'pointer'
-};
-
-const primary = {
+const saveBtn = {
     background: "#3b82f6",
     color: "#fff",
     border: "none",
-    padding: "8px 20px",
+    padding: "8px 24px",
     borderRadius: 8,
     fontWeight: 600,
     cursor: 'pointer'
@@ -319,6 +360,6 @@ const subtaskInputRow = { display: 'flex', gap: 8, marginBottom: 16 };
 const addBtn = { background: '#22c55e', color: '#fff', border: 'none', borderRadius: 8, width: 40, cursor: 'pointer', fontSize: 18 };
 
 const list = { display: 'flex', flexDirection: 'column', gap: 8 };
-const listItem = { display: 'flex', alignItems: 'center', padding: "8px 12px", background: 'rgba(255,255,255,0.02)', borderRadius: 8, cursor: 'pointer' };
+const listItem = { display: 'flex', alignItems: 'center', padding: "8px 12px", background: 'rgba(255,255,255,0.02)', borderRadius: 8 };
 const subText = { fontSize: 11, color: '#94a3b8' };
 const removeBtn = { background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: 18 };

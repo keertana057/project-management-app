@@ -1,5 +1,6 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "./useAuth";
+import Navbar from "../components/Navbar";
 
 const ProtectedRoute = ({ children, roles }) => {
   const { user } = useAuth();
@@ -12,7 +13,12 @@ const ProtectedRoute = ({ children, roles }) => {
     return <Navigate to="/" replace />;
   }
 
-  return children;
+  return (
+    <>
+      <Navbar />
+      {children}
+    </>
+  );
 };
 
 export default ProtectedRoute;

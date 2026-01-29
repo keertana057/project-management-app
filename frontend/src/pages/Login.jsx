@@ -38,8 +38,8 @@ export default function Login() {
   };
 
   return (
-    <div style={page}>
-      <form style={card} onSubmit={handleLogin}>
+    <div style={page} className="animate-fade-in">
+      <form style={card} className="glass-panel" onSubmit={handleLogin}>
         <h1 style={title}>Project Management</h1>
         <p style={subtitle}>Sign in to continue</p>
 
@@ -70,6 +70,10 @@ export default function Login() {
         <button style={button} disabled={loading}>
           {loading ? "Signing in..." : "Login"}
         </button>
+
+        <div style={{ marginTop: 20, textAlign: 'center', fontSize: 13, color: '#94a3b8' }}>
+          <p>Don't have an account? <a href="/register" style={{ color: '#3b82f6', textDecoration: 'none' }}>Register</a></p>
+        </div>
       </form>
     </div>
   );
@@ -82,15 +86,12 @@ const page = {
   display: "flex",
   justifyContent: "center",
   alignItems: "center",
-  background: "linear-gradient(135deg, #020617, #0f172a)",
 };
 
 const card = {
   width: 380,
-  background: "#020617",
   padding: "36px 32px",
   borderRadius: 12,
-  boxShadow: "0 20px 40px rgba(0,0,0,0.6)",
 };
 
 const title = {
@@ -119,8 +120,8 @@ const label = {
 const input = {
   padding: "12px 14px",
   borderRadius: 8,
-  border: "1px solid #1e293b",
-  background: "#020617",
+  border: "1px solid rgba(255, 255, 255, 0.1)",
+  background: "rgba(0, 0, 0, 0.3)",
   color: "#fff",
   outline: "none",
   fontSize: 14,
