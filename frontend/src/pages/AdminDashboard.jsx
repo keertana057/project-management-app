@@ -7,12 +7,19 @@ import {
 } from "../api/projectApi";
 import { getProjectManagers } from "../api/userApi";
 import { useToast } from "../ui/ToastContext";
+import EditProjectModal from "../components/EditProjectModal";
 
 export default function AdminDashboard() {
   const [projects, setProjects] = useState([]);
   const [pms, setPMs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [newProject, setNewProject] = useState({ name: "", description: "", endDate: "" });
+  const [newProject, setNewProject] = useState({
+    name: "",
+    description: "",
+    endDate: "",
+  });
+  const [editProject, setEditProject] = useState(null);
+
   const { showToast } = useToast();
 
   const fetchData = async () => {
@@ -20,23 +27,16 @@ export default function AdminDashboard() {
       getAllProjects(),
       getProjectManagers(),
     ]);
-
     setProjects(projectsRes.data);
     setPMs(pmRes.data);
     setLoading(false);
   };
 
   useEffect(() => {
-    showToast("Toast system working", "success");
-  }, []);
-
-  useEffect(() => {
     fetchData().catch(() =>
       showToast("Failed to load admin data", "error")
     );
   }, []);
-
-
 
   const handleCreateProject = async (e) => {
     e.preventDefault();
@@ -46,9 +46,9 @@ export default function AdminDashboard() {
 
     try {
       await createProject(newProject);
-      showToast("Project created successfully", "success");
-      setNewProject({ name: "", description: "", endDate: "" }); // Reset form
-      fetchData(); // Refresh list
+      showToast("Project created", "success");
+      setNewProject({ name: "", description: "", endDate: "" });
+      fetchData();
     } catch {
       showToast("Failed to create project", "error");
     }
@@ -79,17 +79,15 @@ export default function AdminDashboard() {
   if (loading) return <p style={loadingText}>Loading...</p>;
 
   return (
-    <div style={page} className="animate-fade-in">
+    <div style={page}>
       <h1 style={title}>Admin Dashboard</h1>
 
-      {/* CREATE PROJECT FORM */}
-      <div style={formCard} className="glass-panel">
-        <h3>Create New Project</h3>
+      {/* CREATE PROJECT */}
+      <div style={formCard}>
+        <h3>Create Project</h3>
         <form onSubmit={handleCreateProject} style={form}>
           <input
-            className="input-focus"
             style={input}
-            type="text"
             placeholder="Project Name"
             value={newProject.name}
             onChange={(e) =>
@@ -97,62 +95,44 @@ export default function AdminDashboard() {
             }
           />
           <input
-            className="input-focus"
             style={input}
-            type="text"
             placeholder="Description"
             value={newProject.description}
             onChange={(e) =>
               setNewProject({ ...newProject, description: e.target.value })
             }
           />
-          <div style={{ display: 'flex', flexDirection: 'column', color: '#cbd5e1', fontSize: '12px', gap: '4px' }}>
-            <label>Deadline</label>
-            <input
-              className="input-focus"
-              style={input}
-              type="date"
-              value={newProject.endDate}
-              onChange={(e) =>
-                setNewProject({ ...newProject, endDate: e.target.value })
-              }
-            />
-          </div>
-          <button type="submit" style={createBtn}>
-            Create Project
-          </button>
+          <input
+            type="date"
+            style={input}
+            value={newProject.endDate}
+            onChange={(e) =>
+              setNewProject({ ...newProject, endDate: e.target.value })
+            }
+          />
+          <button style={createBtn}>Create</button>
         </form>
       </div>
 
-      {projects.length === 0 ? (
-        <p style={muted}>No active projects</p>
-      ) : (
-        <div style={grid}>
-          {projects.map((project, index) => (
-            <div
-              key={project._id}
-              style={{ ...card, animationDelay: `${index * 0.1}s` }}
-              className="glass-panel card-hover animate-fade-in"
-            >
+      {/* PROJECT LIST */}
+      <div style={grid}>
+        {projects.map((project) => (
+          <div key={project._id} style={card}>
+            <div>
               <h3>{project.name}</h3>
               <p style={muted}>{project.description}</p>
 
-              <div style={dates}>
+              <p style={dateText}>
+                Created: {new Date(project.createdAt).toLocaleDateString()}
+              </p>
+              {project.endDate && (
                 <p style={dateText}>
-                  Created: {new Date(project.createdAt).toLocaleDateString()}
+                  Deadline: {new Date(project.endDate).toLocaleDateString()}
                 </p>
-                {project.endDate && (
-                  <p style={dateText}>
-                    Deadline: {new Date(project.endDate).toLocaleDateString()}
-                  </p>
-                )}
-              </div>
+              )}
 
               <p>
-                PM:{" "}
-                <strong>
-                  {project.projectManager?.name || "Unassigned"}
-                </strong>
+                PM: <strong>{project.projectManager?.name || "Unassigned"}</strong>
               </p>
 
               <select
@@ -169,16 +149,35 @@ export default function AdminDashboard() {
                   </option>
                 ))}
               </select>
+            </div>
+
+            {/* ACTIONS */}
+            <div style={actionsRow}>
+              <button
+                style={editBtn}
+                onClick={() => setEditProject(project)}
+              >
+                Edit
+              </button>
 
               <button
                 style={archiveBtn}
                 onClick={() => handleArchive(project._id)}
               >
-                Archive Project
+                Archive
               </button>
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
+      </div>
+
+      {/* EDIT MODAL */}
+      {editProject && (
+        <EditProjectModal
+          project={editProject}
+          onClose={() => setEditProject(null)}
+          onUpdated={fetchData}
+        />
       )}
     </div>
   );
@@ -189,29 +188,97 @@ export default function AdminDashboard() {
 const page = {
   minHeight: "100vh",
   padding: 40,
+  background: "#020617",
   color: "#e5e7eb",
 };
 
 const title = {
   fontSize: 28,
   marginBottom: 24,
-  fontWeight: 600,
+};
+
+const formCard = {
+  background: "#020617",
+  border: "1px solid #1e293b",
+  padding: 24,
+  borderRadius: 12,
+  marginBottom: 32,
+};
+
+const form = {
+  display: "grid",
+  gridTemplateColumns: "2fr 3fr 1.5fr auto",
+  gap: 12,
+};
+
+const input = {
+  padding: "10px 12px",
+  borderRadius: 8,
+  border: "1px solid #334155",
+  background: "#0f172a",
   color: "#fff",
+};
+
+const createBtn = {
+  background: "#2563eb",
+  border: "none",
+  borderRadius: 8,
+  color: "#fff",
+  padding: "10px 18px",
+  cursor: "pointer",
 };
 
 const grid = {
   display: "grid",
-  gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
+  gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
   gap: 24,
 };
 
 const card = {
-  padding: 24,
-  borderRadius: 12,
+  background: "#020617",
+  border: "1px solid #1e293b",
+  borderRadius: 14,
+  padding: 20,
   display: "flex",
   flexDirection: "column",
-  gap: 12,
-  opacity: 0, // start invisible for animation
+  justifyContent: "space-between",
+  gap: 16,
+};
+
+const actionsRow = {
+  display: "flex",
+  gap: 10,
+  marginTop: 10,
+};
+
+const editBtn = {
+  flex: 1,
+  background: "#7f1d1d",
+  color: "#fee2e2",
+  border: "none",
+  borderRadius: 8,
+  padding: "8px",
+  cursor: "pointer",
+};
+
+const archiveBtn = {
+  flex: 1,
+  background: "transparent",
+  color: "#ef4444",
+  border: "1px solid #dc2626",
+  borderRadius: 8,
+  padding: "8px",
+  cursor: "pointer",
+};
+
+const select = {
+  width: "100%",
+  padding: "8px",
+  borderRadius: 6,
+  background: "#0f172a",
+  color: "#fff",
+  border: "1px solid #334155",
+  marginTop: 8,
 };
 
 const muted = {
@@ -219,25 +286,9 @@ const muted = {
   fontSize: 14,
 };
 
-const select = {
-  padding: "8px 12px",
-  borderRadius: 6,
-  border: "1px solid #334155",
-  background: "#0f172a",
-  color: "#fff",
-  width: "100%",
-  marginTop: 8,
-};
-
-const archiveBtn = {
-  marginTop: 12,
-  padding: "8px 16px",
-  borderRadius: 6,
-  border: "1px solid #dc2626",
-  background: "transparent",
-  color: "#ef4444",
-  cursor: "pointer",
-  transition: "all 0.2s",
+const dateText = {
+  fontSize: 13,
+  color: "#94a3b8",
 };
 
 const loadingText = {
@@ -245,48 +296,3 @@ const loadingText = {
   color: "#94a3b8",
 };
 
-const formCard = {
-  padding: 24,
-  borderRadius: 12,
-  marginBottom: 32,
-};
-
-const form = {
-  display: "flex",
-  gap: 12,
-  marginTop: 16,
-  flexWrap: "wrap",
-};
-
-const input = {
-  padding: "10px 14px",
-  borderRadius: 8,
-  border: "1px solid rgba(255, 255, 255, 0.1)",
-  background: "rgba(0, 0, 0, 0.3)",
-  color: "#fff",
-  minWidth: 200,
-  flex: 1,
-};
-
-const createBtn = {
-  padding: "10px 24px",
-  borderRadius: 8,
-  border: "none",
-  background: "#2563eb",
-  color: "#fff",
-  fontWeight: 600,
-  cursor: "pointer",
-};
-
-const dates = {
-  display: "flex",
-  flexDirection: "column",
-  gap: 4,
-  fontSize: 13,
-  color: "#94a3b8",
-  marginTop: 8,
-};
-
-const dateText = {
-  margin: 0,
-};

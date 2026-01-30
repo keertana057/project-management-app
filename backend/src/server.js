@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-dotenv.config(); // ✅ FIRST LINE — before any other imports
+dotenv.config(); 
 
 import express from "express";
 import cors from "cors";
@@ -12,7 +12,7 @@ import taskRoutes from "./routes/task.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import templateRoutes from "./routes/projectTemplate.routes.js";
 
-await connectDB(); // ✅ wait for DB before starting server
+await connectDB(); 
 
 const app = express();
 app.use(cors());
