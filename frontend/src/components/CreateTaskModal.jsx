@@ -2,12 +2,11 @@ import { useState } from "react";
 
 export default function CreateTaskModal({
     members,
-    tasks = [], // Array of existing tasks for dependencies
+    tasks = [], 
     onClose,
     onCreate,
 }) {
-    const [activeTab, setActiveTab] = useState("details"); // details, subtasks, dependencies
-
+    const [activeTab, setActiveTab] = useState("details"); 
     const [form, setForm] = useState({
         title: "",
         description: "",

@@ -21,7 +21,6 @@ const router = express.Router();
 /* ================= ADMIN ================= */
 router.post("/", verifyJWT, checkRole(["ADMIN"]), createProject);
 router.get("/", verifyJWT, checkRole(["ADMIN"]), getAllProjects);
-router.get("/:id", verifyJWT, checkRole(["ADMIN", "PROJECT_MANAGER"]), getProjectById);
 router.put("/:id", verifyJWT, checkRole(["ADMIN"]), updateProject);
 router.put("/:id/manager", verifyJWT, checkRole(["ADMIN"]), assignProjectManager);
 router.put("/:id/archive", verifyJWT, checkRole(["ADMIN"]), archiveProject);
@@ -34,5 +33,8 @@ router.put("/:id/status", verifyJWT, checkRole(["PROJECT_MANAGER"]), updateProje
 /* ================= EMPLOYEE ================= */
 router.get("/my", verifyJWT, checkRole(["EMPLOYEE"]), getEmployeeProjects);
 router.get("/:id/my", verifyJWT, checkRole(["EMPLOYEE"]), getEmployeeProjectById);
+
+/* ⚠️ KEEP THIS AT THE VERY END */
+router.get("/:id", verifyJWT, checkRole(["ADMIN", "PROJECT_MANAGER"]), getProjectById);
 
 export default router;
